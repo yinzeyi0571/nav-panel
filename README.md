@@ -10,6 +10,20 @@
 
 ---
 
+## 界面预览
+
+> 截图里的站点都是示例数据（GitHub / 哔哩哔哩 / 维基百科 等公开网站）。
+
+| 首页（深色） | 首页（浅色） |
+| --- | --- |
+| ![首页-深色](release/screenshots/01-首页-深色.png) | ![首页-浅色](release/screenshots/02-首页-浅色.png) |
+
+| 编辑工具菜单 | 分组管理 | 登录页 |
+| --- | --- | --- |
+| ![编辑工具菜单](release/screenshots/03-编辑工具菜单.png) | ![分组管理](release/screenshots/04-分组管理.png) | ![登录页](release/screenshots/05-登录页.png) |
+
+---
+
 ## 特性
 
 - **多用户隔离** —— 每个用户一套分组 / 站点 / 外观设置，互不可见
@@ -59,7 +73,7 @@ nav/
 ├── Dockerfile.web          Web 镜像（nginx + 前端构建产物）
 ├── docker-compose.yml      一键部署
 ├── .env.example            环境变量样例
-├── release/                部署说明与 nginx 兜底配置（不含打包好的 zip，请自行构建）
+├── release/                部署说明、nginx 兜底配置、界面截图（不含打包好的 zip）
 ├── uploads/                用户上传的图标（运行时产生，不入库）
 ├── 404.html
 └── 48x48.ico

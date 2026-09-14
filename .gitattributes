@@ -1,0 +1,47 @@
+# ============================================================
+#  导航站 v2 — Git 换行符与二进制类型声明
+#
+#  为什么必须有这个文件：
+#  Windows 上默认的 core.autocrlf 会把检出到工作区的文件换成 CRLF。
+#  docker/entrypoint.sh 一旦带上 CR，容器里立刻报
+#  "/bin/sh^M: bad interpreter" 直接起不来；nginx.conf、Dockerfile
+#  也可能因为行尾的 CR 解析失败。这里强制全部文本文件用 LF，
+#  与部署目标（Linux）保持一致。
+# ============================================================
+
+# 默认：自动识别文本文件，工作区统一用 LF
+* text=auto eol=lf
+
+# 明确要求 LF 的文本类型
+*.sh               text eol=lf
+*.php              text eol=lf
+*.js               text eol=lf
+*.mjs              text eol=lf
+*.vue              text eol=lf
+*.css              text eol=lf
+*.html             text eol=lf
+*.json             text eol=lf
+*.md               text eol=lf
+*.yml              text eol=lf
+*.yaml             text eol=lf
+*.ini              text eol=lf
+*.conf             text eol=lf
+*.txt              text eol=lf
+Dockerfile         text eol=lf
+Dockerfile.*       text eol=lf
+.dockerignore      text eol=lf
+.gitignore         text eol=lf
+.env.example       text eol=lf
+
+# 二进制文件，禁止任何换行符转换
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.zip   binary
+*.rar   binary
+
+# 部署包里是打包好的产物，不要让 git 生成 diff
+release/*.zip  -diff

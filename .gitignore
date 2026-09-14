@@ -1,0 +1,70 @@
+# ============================================================
+#  导航站 v2  .gitignore
+#  原则：只提交「源码 + 构建脚本 + 文档」。
+#  真实数据库、上传内容、服务器配置、开发产物一律不入库。
+# ============================================================
+
+# ---------- 1. 敏感数据（★ 绝不能入库）----------
+# SQLite 主库：含 admin/user 的 bcrypt 密码哈希
+data.db
+data.db-wal
+data.db-shm
+*.sqlite
+*.sqlite3
+# v1 遗留的 JSON 数据（同样含用户哈希）
+data.json
+# 会话文件（正常在站点根之外，这里只是保险）
+sessions/
+
+# open_basedir 权限不足时，后端会退回站点根下的这个目录存库
+storage/
+
+# ---------- 2. 服务器相关 ----------
+# 含生产服务器绝对路径与 open_basedir
+.user.ini
+
+# ---------- 3. v1 遗留文件（v2 已废弃）----------
+/api.php
+/admin.html
+/login.html
+# 根目录下的 v1 首页；v2 的首页由 frontend/ 构建产出
+/index.html
+# v1 遗留的 test/proxy.php 是个能转发到任意地址的开放代理（SSRF），不能入库
+/test/
+# 空文件，无内容
+/.htaccess
+
+# ---------- 4. 用户上传的图标 ----------
+uploads/*
+!uploads/.gitkeep
+
+# ---------- 5. 整站备份包 ----------
+*.rar
+*.7z
+
+# ---------- 6. 开发产物 ----------
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
+*.local
+
+# ---------- 7. 开发与运维临时目录 ----------
+.workbuddy/
+.trae/
+
+# Docker Compose 的实际环境变量（从 .env.example 复制而来，可能含私密配置）
+.env
+
+# ---------- 8. 编辑器与系统文件 ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- 9. 日志与临时文件 ----------
+*.log
+*.tmp
+*.bak

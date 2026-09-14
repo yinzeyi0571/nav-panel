@@ -1,0 +1,78 @@
+# ============================================================
+#  导航站 v2 — Docker Compose 一键部署
+#
+#    cp .env.example .env
+#    docker compose up -d --build
+#    浏览器打开 http://<服务器IP>:${NAV_PORT}
+#
+#  app = php-fpm（后端，只监听 compose 内网 9000）
+#  web = nginx（前端构建产物 + 唯一对外端口）
+#
+#  数据全部落在命名卷里，删容器不丢数据：
+#    nav-data     数据库 + 会话（都在站点根之外，HTTP 下载不到）
+#    nav-uploads  用户上传的图标 / favicon 缓存
+# ============================================================
+
+name: nav
+
+services:
+
+  # ---------------- 后端：PHP-FPM ----------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nav-app:2.1.0
+    container_name: nav-app
+    restart: unless-stopped
+    environment:
+      # 关键：库放数据卷里（站点根之外）
+      # 不设这个的话，后端会算成「站点根上一级」，在容器里等于根目录，会失败并退回站点根内的 storage/
+      NAV_DB_FILE: /data/data.db
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - nav-data:/data
+      - nav-uploads:/var/www/html/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks: [nav]
+
+  # ---------------- 前端 + 网关：nginx ----------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: nav-web:2.1.0
+    container_name: nav-web
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      # 默认 8080，改 .env 里的 NAV_PORT 即可
+      - "${NAV_PORT:-8080}:80"
+    volumes:
+      # 只读：图标由 app 容器写入，nginx 只负责发出去
+      - nav-uploads:/var/www/html/uploads:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks: [nav]
+
+volumes:
+  nav-data:
+  nav-uploads:
+
+networks:
+  nav:
+    driver: bridge

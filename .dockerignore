@@ -1,0 +1,48 @@
+# ============================================================
+#  导航站 v2 — 构建上下文排除清单
+#
+#  不加这个文件的话，整个项目目录（含几百 MB 的 node_modules、
+#  几百 MB 的 .workbuddy、以及真实数据库）都会被打包发给
+#  docker daemon，又慢又危险。
+# ============================================================
+
+# ---------- 版本控制与编辑器 ----------
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.trae
+.workbuddy
+
+# ---------- 依赖与构建产物（镜像里会重新构建）----------
+node_modules
+**/node_modules
+dist
+**/dist
+.vite
+
+# ---------- 敏感数据（★ 绝不能进镜像）----------
+data.db
+data.db-wal
+data.db-shm
+data.json
+*.sqlite
+*.sqlite3
+storage
+sessions
+.user.ini
+*.rar
+*.7z
+*.log
+*.bak
+
+# ---------- 运行时数据（走数据卷，不打进镜像）----------
+uploads
+release
+
+# ---------- 部署说明等文档 ----------
+*.md
+.env
+.env.*
+!.env.example

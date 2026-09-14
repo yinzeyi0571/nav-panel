@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1115">
+  <title>导航站</title>
+  <link rel="icon" href="./48x48.ico">
+
+  <!--
+    首屏防白闪：在 Vue 挂载之前先把主题和壁纸刷上。
+    这里只能用 localStorage 里的缓存，因为后端数据还没请求回来。
+    等 /api 返回后再由 pinia store 用服务端设置覆盖一次。
+  -->
+  <script>
+    (function () {
+      try {
+        var cached = localStorage.getItem('nav.cache');
+        if (!cached) return;
+        var o = JSON.parse(cached) || {};
+        var mode = o.theme_mode || 'auto';
+        var dark = mode === 'dark' ||
+          (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme-name', o.theme || 'aurora');
+        if (o.wallpaper) {
+          document.body.style.backgroundImage = 'url("' + o.wallpaper + '")';
+        }
+      } catch (e) { /* 缓存坏了就按默认走 */ }
+    })();
+  </script>
+
+  <style>
+    html, body { margin: 0; padding: 0; }
+    body {
+      background-color: #0f1115;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+    #nav-boot {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity .35s ease;
+    }
+    #nav-boot .ring {
+      width: 38px;
+      height: 38px;
+      border: 3px solid rgba(128, 128, 128, .25);
+      border-top-color: #2080F0;
+      border-radius: 50%;
+      animation: nav-spin .8s linear infinite;
+    }
+    @keyframes nav-spin { to { transform: rotate(360deg); } }
+    #nav-boot.done { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="nav-boot"><div class="ring"></div></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

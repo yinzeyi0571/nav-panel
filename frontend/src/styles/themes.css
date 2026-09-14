@@ -1,0 +1,146 @@
+/* ==========================================================================
+   主题配色
+   data-theme      = dark | light      （明暗）
+   data-theme-name = aurora | night | ocean | sunset | minimal  （强调色）
+   ========================================================================== */
+
+/* ---------------- 暗色基础 ---------------- */
+[data-theme='dark'] {
+  --c-bg: #0f1115;
+  --c-bg-glow: radial-gradient(1200px 600px at 12% -8%, rgba(255, 255, 255, .05), transparent 60%),
+               radial-gradient(900px 500px at 92% 0%, rgba(255, 255, 255, .035), transparent 55%);
+  --c-text: #e8eaf0;
+  --c-text-dim: #98a1b0;
+  --c-text-weak: #6b7482;
+  --c-surface: rgba(255, 255, 255, .055);
+  --c-surface-2: rgba(255, 255, 255, .1);
+  --c-surface-solid: #191d24;
+  --c-border: rgba(255, 255, 255, .1);
+  --c-border-strong: rgba(255, 255, 255, .22);
+  --c-scroll: rgba(255, 255, 255, .16);
+  --c-shadow: 0 10px 30px rgba(0, 0, 0, .36);
+  --c-shadow-sm: 0 2px 10px rgba(0, 0, 0, .25);
+  --c-overlay: rgba(8, 10, 14, .74);
+  --c-danger: #e5484d;
+  --c-ok: #18A058;
+  --c-warn: #F0A020;
+  --c-mask-tint: 0, 0, 0;
+  color-scheme: dark;
+}
+
+/* ---------------- 亮色基础 ----------------
+   :root:not([data-theme]) 是「还没设置主题」时的兜底。
+   所有颜色变量都只定义在 [data-theme] 下，如果某个页面在 applyAppearance()
+   跑起来之前就渲染（最典型的是登录页：它不拉 home.index），
+   变量会全部为空 —— 表现就是整页没有任何颜色、白底黑字。
+   加上这一条后，最坏情况也只是「亮色」，不会掉成无样式。
+   （:not([data-theme]) 只在属性缺失时命中，不会和下面的暗色选择器抢优先级） */
+:root:not([data-theme]),
+[data-theme='light'] {
+  --c-bg: #f4f6f9;
+  --c-bg-glow: radial-gradient(1100px 560px at 10% -10%, rgba(255, 255, 255, .9), transparent 62%),
+               radial-gradient(900px 480px at 95% 0%, rgba(255, 255, 255, .7), transparent 58%);
+  --c-text: #1b1f26;
+  --c-text-dim: #5e6773;
+  --c-text-weak: #8b94a1;
+  --c-surface: rgba(255, 255, 255, .74);
+  --c-surface-2: rgba(255, 255, 255, .95);
+  --c-surface-solid: #ffffff;
+  --c-border: rgba(16, 24, 40, .09);
+  --c-border-strong: rgba(16, 24, 40, .2);
+  --c-scroll: rgba(16, 24, 40, .16);
+  --c-shadow: 0 10px 30px rgba(16, 24, 40, .1);
+  --c-shadow-sm: 0 2px 10px rgba(16, 24, 40, .07);
+  --c-overlay: rgba(255, 255, 255, .88);
+  --c-danger: #d92d20;
+  --c-ok: #12a150;
+  --c-warn: #cf8a00;
+  --c-mask-tint: 255, 255, 255;
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   各套主题的强调色
+   ========================================================================== */
+
+/* ---- 极光 aurora ---- */
+[data-theme='dark'][data-theme-name='aurora'] {
+  --c-bg: #0c1017;
+  --c-accent: #2080F0;
+  --c-accent-hover: #4a9bff;
+  --c-accent-soft: rgba(32, 128, 240, .18);
+  --c-accent-contrast: #ffffff;
+}
+[data-theme='light'][data-theme-name='aurora'] {
+  --c-accent: #1677ff;
+  --c-accent-hover: #0d5fd6;
+  --c-accent-soft: rgba(22, 119, 255, .12);
+  --c-accent-contrast: #ffffff;
+}
+
+/* ---- 暗夜 night ---- */
+[data-theme='dark'][data-theme-name='night'] {
+  --c-bg: #0a0a0d;
+  --c-accent: #8b5cf6;
+  --c-accent-hover: #a78bfa;
+  --c-accent-soft: rgba(139, 92, 246, .2);
+  --c-accent-contrast: #ffffff;
+}
+[data-theme='light'][data-theme-name='night'] {
+  --c-accent: #7c3aed;
+  --c-accent-hover: #6d28d9;
+  --c-accent-soft: rgba(124, 58, 237, .12);
+  --c-accent-contrast: #ffffff;
+}
+
+/* ---- 海洋 ocean ---- */
+[data-theme='dark'][data-theme-name='ocean'] {
+  --c-bg: #061a24;
+  --c-accent: #22d3ee;
+  --c-accent-hover: #67e8f9;
+  --c-accent-soft: rgba(34, 211, 238, .18);
+  --c-accent-contrast: #04222b;
+}
+[data-theme='light'][data-theme-name='ocean'] {
+  --c-accent: #0891b2;
+  --c-accent-hover: #0e7490;
+  --c-accent-soft: rgba(8, 145, 178, .12);
+  --c-accent-contrast: #ffffff;
+}
+
+/* ---- 日落 sunset ---- */
+[data-theme='dark'][data-theme-name='sunset'] {
+  --c-bg: #1a1113;
+  --c-accent: #F0A020;
+  --c-accent-hover: #ffb74d;
+  --c-accent-soft: rgba(240, 160, 32, .18);
+  --c-accent-contrast: #2a1a05;
+}
+[data-theme='light'][data-theme-name='sunset'] {
+  --c-accent: #d97706;
+  --c-accent-hover: #b45309;
+  --c-accent-soft: rgba(217, 119, 6, .12);
+  --c-accent-contrast: #ffffff;
+}
+
+/* ---- 极简 minimal ---- */
+[data-theme='dark'][data-theme-name='minimal'] {
+  --c-bg: #101216;
+  --c-accent: #e8eaf0;
+  --c-accent-hover: #ffffff;
+  --c-accent-soft: rgba(255, 255, 255, .12);
+  --c-accent-contrast: #14171c;
+}
+[data-theme='light'][data-theme-name='minimal'] {
+  --c-accent: #1b1f26;
+  --c-accent-hover: #000000;
+  --c-accent-soft: rgba(27, 31, 38, .08);
+  --c-accent-contrast: #ffffff;
+}
+
+/* 没有壁纸时把氛围渐变刷上 */
+body {
+  background-image: var(--c-bg-glow);
+  background-attachment: fixed;
+  transition: background-color .25s ease;
+}

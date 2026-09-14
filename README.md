@@ -49,7 +49,9 @@
 ├── frontend/               前端源码（Vue 3 + Vite）
 │   └── src/{api,components,router,stores,styles,utils,views}
 ├── docker/
-│   └── nginx.conf          Docker 部署用的 nginx 站点配置
+│   ├── nginx.conf          Docker 部署用的 nginx 站点配置
+│   ├── entrypoint.sh       容器启动脚本（每次启动修正数据卷属主）
+│   └── install.sh          ★ 一键部署脚本（拉代码 → 生成 .env → 构建启动 → 探活）
 ├── Dockerfile              应用镜像（php-fpm + 后端）
 ├── Dockerfile.web          Web 镜像（nginx + 前端构建产物）
 ├── docker-compose.yml      一键部署
@@ -68,6 +70,38 @@
 
 服务器只需装 Docker 与 Docker Compose 插件。前端会在镜像里自动构建，**不需要预先装 Node 或 PHP**。
 
+#### A-1 一键脚本（最省事）
+
+`docker/install.sh` 会依次完成：检查 Docker / Compose → 拉代码 → 生成 `.env` → 构建启动 → 探活并打印访问地址。
+
+> ⚠️ 仓库是**私有**的，`raw.githubusercontent.com` 匿名下载会被 404，所以没法用 `curl … | bash` 那套。
+> 先把脚本拷到服务器就行：
+
+```bash
+# 在你自己的电脑上
+scp docker/install.sh root@<服务器IP>:/root/
+
+# 在服务器上
+chmod +x /root/install.sh
+/root/install.sh --token <GitHub PAT>       # HTTPS 拉私有仓库
+```
+
+| 场景 | 命令 |
+| --- | --- |
+| 服务器已配好 GitHub SSH key | `./install.sh --ssh` |
+| 源码已经拷贝到服务器上（离线） | `./install.sh --local /path/to/src` |
+| 指定安装目录和端口 | `./install.sh --dir /opt/123.lan --port 8090` |
+| 只拉代码不启动 | `./install.sh --no-start` |
+| 先看它会做什么 | `./install.sh --dry-run` |
+| **升级到新版本** | 再跑一次同样的命令，自动 `git pull` + 重新构建 |
+
+参数：`-d/--dir`、`-p/--port`、`-b/--branch`、`-t/--token`（也可设环境变量 `GITHUB_TOKEN`）、
+`--ssh`、`--local`、`--no-start`、`--dry-run`、`-h/--help`。
+
+脚本**不会把 token 写进任何文件**，克隆完成后会立刻把 remote URL 里的 token 抹掉。
+
+#### A-2 手动执行
+
 ```bash
 git clone <你的仓库地址> 123.lan
 cd 123.lan
@@ -76,6 +110,84 @@ docker compose up -d --build
 ```
 
 打开 `http://<服务器IP>:8080`（端口由 `.env` 里的 `NAV_PORT` 决定）。
+
+#### 完整 compose 配置
+
+下面是 `docker-compose.yml` 的完整内容（两服务：`app` = php-fpm 只监听 compose 内网 9000，
+`web` = nginx 承载前端产物并独占对外端口）：
+
+```yaml
+name: nav
+
+services:
+
+  # ---------------- 后端：PHP-FPM ----------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nav-app:2.1.0
+    container_name: nav-app
+    restart: unless-stopped
+    environment:
+      # 关键：库放数据卷里（站点根之外）
+      # 不设这个的话，后端会算成「站点根上一级」，在容器里等于根目录，会失败并退回站点根内的 storage/
+      NAV_DB_FILE: /data/data.db
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - nav-data:/data
+      - nav-uploads:/var/www/html/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks: [nav]
+
+  # ---------------- 前端 + 网关：nginx ----------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: nav-web:2.1.0
+    container_name: nav-web
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      # 默认 8080，改 .env 里的 NAV_PORT 即可
+      - "${NAV_PORT:-8080}:80"
+    volumes:
+      # 只读：图标由 app 容器写入，nginx 只负责发出去
+      - nav-uploads:/var/www/html/uploads:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks: [nav]
+
+volumes:
+  nav-data:
+  nav-uploads:
+
+networks:
+  nav:
+    driver: bridge
+```
+
+配套环境变量（`.env.example`）：
+
+```ini
+NAV_PORT=8080        # 宿主机端口，容器内 nginx 固定 80
+TZ=Asia/Shanghai
+```
 
 数据落在两个命名卷里，容器删除也不会丢：
 
@@ -94,7 +206,24 @@ docker run --rm -v nav_nav-data:/data -v "$PWD":/backup alpine \
 > **改用宿主机目录挂载**（想直接看到文件时）：把 compose 里的 `nav-data:/data` 换成 `./data:/data`，
 > 然后先 `mkdir -p ./data/sessions && sudo chown -R 82:82 ./data`（82 是 alpine 镜像里 www-data 的 uid）。
 
-升级：`git pull && docker compose up -d --build`。
+**升级**（两种方式都行）：
+
+```bash
+cd 123.lan
+git pull && docker compose up -d --build      # 手动
+# 或者干脆再跑一次 install.sh，它会自动 pull + 重新构建
+```
+
+#### Docker 排错速查
+
+| 现象 | 原因与处理 |
+| --- | --- |
+| `Bind for 0.0.0.0:8080 failed: port is already allocated` | 端口被占（宝塔默认也有站点）。改 `.env` 里的 `NAV_PORT`，或 `ss -ltnp \\| grep 8080` 看是谁 |
+| 页面 502 | `app` 还没起来。`docker compose ps` 看健康检查，`docker compose logs app` 看报错 |
+| 后台显示「当前环境不支持」 | 数据目录权限问题，看 `docker compose logs app` 里是否有 `Permission denied` |
+| 容器启动报 `entrypoint.sh: not found` 或 `^M` | 脚本被转成了 CRLF。仓库根目录 `.gitattributes` 已强制 `* text=auto eol=lf`，确认没有用 `core.autocrlf=true` 检出 |
+| 数据库又退回站点根内的 `storage/` | `NAV_DB_FILE` 没生效或 `/data` 不可写。确认卷挂载正确，且 `entrypoint.sh` 执行了 `chown 82:82` |
+| 构建很慢 / 拉镜像超时 | 前端构建在容器里跑 `npm install`，首次约几分钟。镜像拉取慢可给 Docker 配镜像加速器 |
 
 ### 方式 B：宝塔 / LNMP（生产现用）
 

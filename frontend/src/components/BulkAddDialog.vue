@@ -142,7 +142,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
                 v-model="text"
                 class="textarea"
                 rows="9"
-                placeholder="https://www.example.com&#10;群晖|192.168.0.118&#10;https://github.com"
+                placeholder="https://www.example.com&#10;群晖|192.168.1.10&#10;https://github.com"
               />
               <span class="field-hint">
                 支持两种写法：只写网址（自动用域名当名称），或
@@ -164,7 +164,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
                   v-model="urls"
                   class="textarea"
                   rows="9"
-                  placeholder="192.168.0.118&#10;192.168.0.1&#10;https://blog.example.com"
+                  placeholder="192.168.1.10&#10;192.168.1.1&#10;https://blog.example.com"
                 />
               </div>
             </div>

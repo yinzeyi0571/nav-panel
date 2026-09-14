@@ -217,7 +217,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
               v-model="form.url_internal"
               class="input"
               type="text"
-              placeholder="http://192.168.0.116:8080"
+              placeholder="http://192.168.1.10:8080"
               @blur="fillName"
             />
             <span class="field-hint">

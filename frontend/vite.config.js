@@ -33,10 +33,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    // 开发时把 /api 转发到测试容器，接口地址在前端代码里统一写 /api/index.php
+    // 开发时把 /api 转发到后端。默认指本机 8080（即 docker compose 起的实例），
+    // 需要指别的地址就设环境变量：VITE_API_TARGET=http://192.168.1.10:8080 npm run dev
     proxy: {
       '/api': {
-        target: 'http://192.168.0.4:8080',
+        target: process.env.VITE_API_TARGET || 'http://127.0.0.1:8080',
         changeOrigin: true
       }
     }

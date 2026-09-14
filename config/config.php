@@ -12,7 +12,7 @@ $siteRoot = dirname($webRoot);      // <站点根>
 
 // SQLite 主库位置。
 // 默认放在站点根目录的「上一级」，这样 HTTP 访问不到，避免 data.db 被直接下载。
-// 例如站点是 /www/wwwroot/123.lan/，库就是 /www/wwwroot/123.lan-data/data.db
+// 例如站点是 /www/wwwroot/nav/，库就是 /www/wwwroot/nav-data/data.db
 // 想放别处：设置环境变量 NAV_DB_FILE 即可，不用改代码。
 // rtrim 是为了站点根直接挂在 / 下时（如 /site）不拼出 //xxx-data 这种双斜杠路径
 $dbFile = (getenv('NAV_DB_FILE') !== false && getenv('NAV_DB_FILE') !== '')

@@ -5,6 +5,9 @@
 
 > 当前版本 **v2.1.1**
 
+> **定位说明**：个人自用项目，不是开箱即用的成品。默认口令、目录约定、宝塔相关的坑都是按我自己的环境写的，
+> 拿去用请先改掉默认口令和配置。欢迎参考，但请自备部署能力。
+
 ---
 
 ## 特性
@@ -37,7 +40,7 @@
 ## 目录结构
 
 ```
-123.lan/
+nav/
 ├── api/                    后端（唯一入口 index.php + 类 + modules/ 业务模块）
 │   ├── index.php           入口：解析 action 并分发
 │   ├── bootstrap.php       引导：读配置 → 连库 → 迁移 → 开会话
@@ -56,7 +59,7 @@
 ├── Dockerfile.web          Web 镜像（nginx + 前端构建产物）
 ├── docker-compose.yml      一键部署
 ├── .env.example            环境变量样例
-├── release/                部署包与部署说明（可直接上传宝塔站点根）
+├── release/                部署说明与 nginx 兜底配置（不含打包好的 zip，请自行构建）
 ├── uploads/                用户上传的图标（运行时产生，不入库）
 ├── 404.html
 └── 48x48.ico
@@ -90,7 +93,7 @@ chmod +x /root/install.sh
 | --- | --- |
 | 服务器已配好 GitHub SSH key | `./install.sh --ssh` |
 | 源码已经拷贝到服务器上（离线） | `./install.sh --local /path/to/src` |
-| 指定安装目录和端口 | `./install.sh --dir /opt/123.lan --port 8090` |
+| 指定安装目录和端口 | `./install.sh --dir /opt/nav --port 8090` |
 | 只拉代码不启动 | `./install.sh --no-start` |
 | 先看它会做什么 | `./install.sh --dry-run` |
 | **升级到新版本** | 再跑一次同样的命令，自动 `git pull` + 重新构建 |
@@ -103,8 +106,8 @@ chmod +x /root/install.sh
 #### A-2 手动执行
 
 ```bash
-git clone <你的仓库地址> 123.lan
-cd 123.lan
+git clone <你的仓库地址> nav
+cd nav
 cp .env.example .env          # 需要改端口就编辑 NAV_PORT
 docker compose up -d --build
 ```
@@ -209,7 +212,7 @@ docker run --rm -v nav_nav-data:/data -v "$PWD":/backup alpine \
 **升级**（两种方式都行）：
 
 ```bash
-cd 123.lan
+cd nav
 git pull && docker compose up -d --build      # 手动
 # 或者干脆再跑一次 install.sh，它会自动 pull + 重新构建
 ```
@@ -227,26 +230,38 @@ git pull && docker compose up -d --build      # 手动
 
 ### 方式 B：宝塔 / LNMP（生产现用）
 
-站点根：`/www/wwwroot/123.lan`，PHP 8.2 + nginx。
+> 下面的示例把站点名统一写成 `nav`，实际部署时按你自己的站点名替换。
+> `release/` 里**不再附带打包好的 zip**（那是按我自己的环境打的），请自行构建前端产物。
 
-1. 把 `api/`、`config/` 上传到站点根，`release/*.zip` 里的 `dist/` 内容**摊平**到站点根
-   （`dist/index.html → 站点根/index.html`，`dist/assets → 站点根/assets`）。
+1. 构建前端产物并**摊平**到站点根：`dist/index.html → 站点根/index.html`、
+   `dist/assets → 站点根/assets`；再把 `api/`、`config/` 上传到站点根。
+
+   ```bash
+   # 本机有 Node 22+
+   cd frontend && npm ci && npm run build      # 产物输出到 ../dist
+
+   # 本机没 Node，借 Docker 构建（产物落在本地 dist/）
+   docker run --rm -v "$PWD":/app -w /app/frontend node:22-alpine \
+     sh -c "npm ci && npm run build"
+   ```
+
+   ⚠️ 一定要把 `dist/` 里的东西「摊平」到站点根，**整目录原样上传不会生效**。
 2. **预建站外数据目录并授权给 PHP 运行用户**：
    ```bash
-   mkdir -p /www/wwwroot/123.lan-data
-   chown www:www /www/wwwroot/123.lan-data
+   mkdir -p /www/wwwroot/nav-data
+   chown www:www /www/wwwroot/nav-data
    ```
    ⚠️ 这一步不能省。PHP 以 `www` 运行，而 `/www/wwwroot` 属主是 `root`，`www` 建不了子目录；
    建不出来时后端会**静默退回**站点根内的 `storage/data.db` —— 那个位置可以被匿名下载。
 3. 在站点根加 `.user.ini`：
    ```ini
-   open_basedir=/www/wwwroot/123.lan/:/www/wwwroot/123.lan-data/:/proc/:/tmp/
+   open_basedir=/www/wwwroot/nav/:/www/wwwroot/nav-data/:/proc/:/tmp/
    display_errors=Off
    ```
    `:/proc/` 必须留着，否则后台「系统状态」会显示「当前环境不支持」。
    宝塔会给这个文件加 immutable 属性，改之前先 `chattr -i`，改完 `chattr +i`。
    改完执行 `/etc/init.d/php-fpm-82 reload`。
-4. 加 nginx 兜底规则（见 `release/nginx-123.lan-deny.conf`），挡住 `.db/.json/.zip/.rar` 与 `storage/`。
+4. 加 nginx 兜底规则（见 `release/nginx-deny-sensitive.conf`），挡住 `.db/.json/.zip/.rar` 与 `storage/`。
 5. 确保 `uploads/` 归 `www:www` 且可写。
 
 详细的踩坑清单见 `release/部署说明-v2.1.1.md`（最新）与 `release/部署说明-v2.1.0.md`。
@@ -269,7 +284,7 @@ git pull && docker compose up -d --build      # 手动
 ## 数据与备份
 
 - **数据库**：`data.db`（WAL 模式）。位置默认在站点根的**上一级**同名 `-data` 目录，例如
-  `/www/wwwroot/123.lan-data/data.db`。可用环境变量 `NAV_DB_FILE` 覆盖。
+  `/www/wwwroot/nav-data/data.db`。可用环境变量 `NAV_DB_FILE` 覆盖。
 - **会话**：`<数据库同目录>/sessions/`。这样做的原因是宝塔默认把会话放在 `/tmp`，
   而 `/tmp` 是全服务器所有 PHP 程序共用的，别的程序触发垃圾回收会把本站会话删掉。
 - **迁移**：启动时自动进行，幂等，不删数据。
@@ -290,4 +305,4 @@ git pull && docker compose up -d --build      # 手动
 
 ## 许可
 
-私人项目，未附开源许可。
+[MIT](LICENSE)

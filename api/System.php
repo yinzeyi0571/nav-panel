@@ -250,7 +250,7 @@ final class System
 
         // 判断库是否落在站点根内部。
         // 必须用「真实路径 + 分隔符」做前缀比较：直接 strpos 会把
-        // /www/wwwroot/123.lan-data 误判成落在 /www/wwwroot/123.lan 里面。
+        // /www/wwwroot/nav-data 误判成落在 /www/wwwroot/nav 里面。
         $inside = false;
         if ($rootReal !== false) {
             $prefix = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;

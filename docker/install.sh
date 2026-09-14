@@ -11,7 +11,7 @@
 #    脚本会自动 git pull（或复用 --local 目录）并重新构建。
 #
 #  其它参数：
-#    -d, --dir DIR     安装目录，默认 ./123.lan
+#    -d, --dir DIR     安装目录，默认 ./nav
 #    -p, --port PORT   对外端口，默认 8080
 #    -b, --branch BR   分支，默认 main
 #        --no-start    只拉代码 / 写配置，不构建启动
@@ -27,7 +27,7 @@ set -euo pipefail
 REPO_SSH="git@github.com:yinzeyi0571/nav-panel.git"
 REPO_HTTPS="https://github.com/yinzeyi0571/nav-panel.git"
 
-INSTALL_DIR="./123.lan"
+INSTALL_DIR="./nav"
 PORT=""
 BRANCH="main"
 TOKEN="${GITHUB_TOKEN:-}"
